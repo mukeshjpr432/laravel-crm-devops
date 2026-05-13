@@ -1,0 +1,70 @@
+version: '3.9'
+
+services:
+
+  jenkins:
+    image: custom-jenkins:lts
+    container_name: jenkins
+
+    ports:
+      - "8082:8080"
+      - "50000:50000"
+
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    restart: always
+
+  sonarqube:
+    image: sonarqube:lts-community
+    container_name: sonarqube
+
+    ports:
+      - "9000:9000"
+
+    environment:
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+
+    restart: always
+
+  postgres:
+    image: postgres:15
+    container_name: postgres-artifactory
+
+    environment:
+      POSTGRES_DB: artifactory
+      POSTGRES_USER: artifactory
+      POSTGRES_PASSWORD: password
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    restart: always
+
+  artifactory:
+    image: releases-docker.jfrog.io/jfrog/artifactory-oss:7.71.11
+    container_name: artifactory
+
+    ports:
+      - "8083:8081"
+      - "8084:8082"
+
+    environment:
+      JF_SHARED_DATABASE_TYPE: postgresql
+      JF_SHARED_DATABASE_DRIVER: org.postgresql.Driver
+      JF_SHARED_DATABASE_URL: jdbc:postgresql://postgres:5432/artifactory
+      JF_SHARED_DATABASE_USERNAME: artifactory
+      JF_SHARED_DATABASE_PASSWORD: password
+
+    depends_on:
+      - postgres
+
+    restart: always
+
+volumes:
+  jenkins_home:
+  postgres_data:

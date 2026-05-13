@@ -2,27 +2,28 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "trial8mlq0s.jfrog.io/docker-local/krayin-crm"
-        IMAGE_TAG = "latest"
+        SONAR_HOST_URL = 'http://host.docker.internal:9000'
+        IMAGE_NAME = 'trial8mlq0s.jfrog.io/docker-local/krayin-crm'
+        IMAGE_TAG = 'latest'
     }
 
     stages {
 
         stage('Checkout Code') {
             steps {
-                checkout scm
+                git branch: 'main',
+                url: 'https://github.com/YOUR_USERNAME/YOUR_REPOSITORY.git'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonarqube') {
-
                     bat '''
                     sonar-scanner ^
                     -Dsonar.projectKey=laravel-crm ^
                     -Dsonar.sources=. ^
-                    -Dsonar.host.url=http://host.docker.internal:9000 ^
+                    -Dsonar.host.url=%SONAR_HOST_URL% ^
                     -Dsonar.login=admin ^
                     -Dsonar.password=admin
                     '''
@@ -42,16 +43,14 @@ pipeline {
             }
         }
 
-        stage('Trivy Scan') {
+        stage('Trivy Security Scan') {
             steps {
                 bat 'trivy image %IMAGE_NAME%:%IMAGE_TAG%'
             }
         }
 
-        stage('Push to JFrog') {
-
+        stage('Push Image to JFrog') {
             steps {
-
                 withCredentials([usernamePassword(
                     credentialsId: 'jfrog-creds',
                     usernameVariable: 'JFROG_USER',
@@ -77,22 +76,15 @@ pipeline {
                 bat 'kubectl apply -f k8s/'
             }
         }
-
-        stage('Verify Deployment') {
-            steps {
-                bat 'kubectl get pods -n laravel-app'
-            }
-        }
     }
 
     post {
-
         success {
-            echo 'Deployment Successful!'
+            echo 'Pipeline executed successfully!'
         }
 
         failure {
-            echo 'Pipeline Failed!'
+            echo 'Pipeline failed!'
         }
     }
 }
