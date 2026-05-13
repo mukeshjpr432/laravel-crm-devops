@@ -3,6 +3,7 @@ kind: Deployment
 
 metadata:
   name: krayin-crm
+  namespace: laravel-app
 
 spec:
   replicas: 2
@@ -20,12 +21,21 @@ spec:
       containers:
       - name: krayin-crm
 
-        image: krayin-crm:latest
+        image: trial8mlq0s.jfrog.io/docker-local/krayin-crm:latest
 
-        imagePullPolicy: Never
+        imagePullPolicy: IfNotPresent
 
         ports:
         - containerPort: 80
+
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
 
         env:
         - name: APP_KEY

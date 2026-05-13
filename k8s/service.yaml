@@ -3,6 +3,7 @@ kind: Service
 
 metadata:
   name: krayin-service
+  namespace: laravel-app
 
 spec:
   type: NodePort
